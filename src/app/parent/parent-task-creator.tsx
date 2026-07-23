@@ -1,10 +1,15 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { starterTasks, taskCategories, Task, TaskCategory } from "@/lib/tasks";
+import { FormEvent, useMemo, useState, useSyncExternalStore } from "react";
+import { loadTasks, saveTasks, subscribeToTasks } from "@/lib/task-storage";
+import { starterTasks, taskCategories, TaskCategory } from "@/lib/tasks";
 
 export function ParentTaskCreator() {
-  const [tasks, setTasks] = useState<Task[]>(starterTasks);
+  const tasks = useSyncExternalStore(
+    subscribeToTasks,
+    loadTasks,
+    () => starterTasks,
+  );
   const [title, setTitle] = useState("");
   const [minutes, setMinutes] = useState("15");
   const [category, setCategory] = useState<TaskCategory>("Homework");
@@ -24,8 +29,8 @@ export function ParentTaskCreator() {
       return;
     }
 
-    setTasks((currentTasks) => [
-      ...currentTasks,
+    saveTasks([
+      ...tasks,
       {
         id: Date.now(),
         title: cleanTitle,
@@ -40,9 +45,7 @@ export function ParentTaskCreator() {
   }
 
   function removeTask(taskId: number) {
-    setTasks((currentTasks) =>
-      currentTasks.filter((task) => task.id !== taskId),
-    );
+    saveTasks(tasks.filter((task) => task.id !== taskId));
   }
 
   return (
@@ -58,8 +61,8 @@ export function ParentTaskCreator() {
           Add a task to today’s plan
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          This is local for now. The goal is to shape the parent workflow before
-          we connect it to a database.
+          This is saved in this browser for now. The goal is to shape the parent
+          workflow before we connect it to a database.
         </p>
 
         <label className="mt-6 block text-sm font-semibold text-slate-700">
